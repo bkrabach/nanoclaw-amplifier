@@ -1,0 +1,13 @@
+[project]
+name = "amplifier-module-tool-nanoclaw-scheduling"
+version = "1.0.0"
+description = "Nanoclaw scheduling tools for Amplifier"
+requires-python = ">=3.12"
+dependencies = ["amplifier-core"]
+
+[project.entry-points."amplifier.modules"]
+tool-nanoclaw-scheduling = "amplifier_module_tool_nanoclaw_scheduling"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

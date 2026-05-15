@@ -1,0 +1,17 @@
+[project]
+name = "nanoclaw-amplifier"
+version = "1.0.0"
+description = "Amplifier-powered replacement for nanoclaw's Claude Code container"
+requires-python = ">=3.12"
+dependencies = [
+    "amplifier-core",
+    "amplifier-foundation",
+    "pyyaml>=6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+nanoclaw-amplifier = "nanoclaw_amplifier.runner:main_sync"

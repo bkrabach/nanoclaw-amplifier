@@ -1,0 +1,19 @@
+{
+  "name": "nanoclaw-amplifier",
+  "version": "1.0.0",
+  "description": "Companion CLI for nanoclaw-amplifier",
+  "type": "module",
+  "bin": {
+    "ncla": "./cli/bin/ncla.js"
+  },
+  "scripts": {
+    "start": "node cli/bin/ncla.js"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.2.0",
+    "kleur": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
