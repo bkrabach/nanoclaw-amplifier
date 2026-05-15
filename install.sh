@@ -240,14 +240,22 @@ if [[ "$SKIP_AUTH" == "yes" ]] && [[ -n "${PROVIDER_API_KEY:-}" ]]; then
   fi
 fi
 
-# ── Step 6: Switch agent provider ─────────────────────────────────────────
+# ── Step 6: Switch agent provider ─────────────────────────────
 if [[ "$PROVIDER_KEY" != "anthropic" ]]; then
   step "Configuring agent to use ${PROVIDER_NAME}"
   sleep 3
 
   AGENT_ID=""
+  # ncl must be run from the nanoclaw directory
   if command -v ncl &>/dev/null; then
-    AGENT_ID=$(ncl groups list 2>/dev/null | grep -oP '"id"\s*:\s*"\K[^"]+' | head -1 || true)
+    AGENT_ID=$(cd "$NANOCLAW_DIR" && ncl groups list 2>/dev/null \
+      | python3 -c "import sys,json; gs=json.load(sys.stdin); print(gs[0]['id'] if gs else '')" 2>/dev/null || true)
+  fi
+
+  if [[ -z "$AGENT_ID" ]]; then
+    # Fallback: try pnpm exec ncl from nanoclaw dir
+    AGENT_ID=$(cd "$NANOCLAW_DIR" && pnpm exec ncl groups list 2>/dev/null \
+      | python3 -c "import sys,json; gs=json.load(sys.stdin); print(gs[0]['id'] if gs else '')" 2>/dev/null || true)
   fi
 
   if [[ -n "${AGENT_ID:-}" ]]; then
@@ -255,17 +263,18 @@ if [[ "$PROVIDER_KEY" != "anthropic" ]]; then
     if command -v onecli &>/dev/null; then
       onecli agents set-secret-mode --id "$AGENT_ID" --mode all 2>/dev/null || true
     fi
-    ncl groups config update \
+    (cd "$NANOCLAW_DIR" && ncl groups config update \
       --id "$AGENT_ID" \
       --provider "$NANOCLAW_PROVIDER" \
-      --model "$PROVIDER_MODEL" 2>/dev/null && \
+      --model "$PROVIDER_MODEL" 2>/dev/null) && \
       info "Agent provider → ${NANOCLAW_PROVIDER} / ${PROVIDER_MODEL}" || \
       warn "Could not update agent provider automatically."
-    ncl groups restart --id "$AGENT_ID" 2>/dev/null && \
-      info "Agent restarted" || \
-      warn "Restart failed — run: ncl groups restart --id ${AGENT_ID}"
+    (cd "$NANOCLAW_DIR" && ncl groups restart --id "$AGENT_ID" 2>/dev/null) && \
+      info "Agent restarted with ${PROVIDER_NAME}" || \
+      warn "Restart failed — run: cd ${NANOCLAW_DIR} && ncl groups restart --id ${AGENT_ID}"
   else
     warn "Could not find agent group ID. After setup, run:"
+    echo "  cd ${NANOCLAW_DIR}"
     echo "  ncl groups list"
     echo "  ncl groups config update --id <id> --provider ${NANOCLAW_PROVIDER} --model ${PROVIDER_MODEL}"
     [[ "$PROVIDER_KEY" != "ollama" ]] && echo "  onecli agents set-secret-mode --id <id> --mode all"
