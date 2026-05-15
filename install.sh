@@ -209,7 +209,7 @@ step "Running nanoclaw setup wizard"
 
 if [[ "$SKIP_AUTH" == "yes" ]]; then
   info "Skipping nanoclaw auth step (you chose ${PROVIDER_NAME})"
-  export NANOCLAW_SKIP="${NANOCLAW_SKIP:-auth}"
+  export NANOCLAW_SKIP="${NANOCLAW_SKIP:-auth,cli-agent}"
 elif [[ -n "${ANTHROPIC_AUTH_TOKEN_VAR:-}" ]]; then
   export NANOCLAW_ANTHROPIC_AUTH_TOKEN="$ANTHROPIC_AUTH_TOKEN_VAR"
   export NANOCLAW_ANTHROPIC_BASE_URL="https://api.anthropic.com"
