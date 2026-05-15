@@ -4,7 +4,7 @@ FROM python:3.12-slim
 # System deps
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
-        git curl ca-certificates tini \
+        git curl ca-certificates tini cargo \
     && rm -rf /var/lib/apt/lists/*
 
 # uv for fast installs
