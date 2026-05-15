@@ -119,36 +119,40 @@ def clear_stale_processing(conn: sqlite3.Connection) -> None:
 
 # ── Inbound reads ─────────────────────────────────────────────────────────────
 
-def fetch_pending(conn: sqlite3.Connection, limit: int = 10) -> list[sqlite3.Row]:
-    return conn.execute(
-        "SELECT id, seq, kind, content, platform_id, channel_type, thread_id "
-        "FROM messages_in "
-        "WHERE status='pending' AND trigger=1 "
-        "AND (process_after IS NULL OR process_after <= datetime('now')) "
-        "ORDER BY seq ASC LIMIT ?",
-        (limit,)
-    ).fetchall()
+def fetch_pending(conn: sqlite3.Connection, limit: int = 10) -> list:
+    try:
+        return conn.execute(
+            "SELECT id, seq, kind, content, platform_id, channel_type, thread_id "
+            "FROM messages_in "
+            "WHERE status='pending' AND trigger=1 "
+            "AND (process_after IS NULL OR process_after <= datetime('now')) "
+            "ORDER BY seq ASC LIMIT ?",
+            (limit,)
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return []
 
-def mark_inbound_status(conn: sqlite3.Connection, message_ids: list[str], status: str) -> None:
-    """Update messages_in.status for the given ids.
-
-    This mirrors what nanoclaw's host sweep does: after the runner writes
-    processing_ack rows, the host updates the inbound-DB messages to
-    'completed' / 'failed' / 'processing'.  When running standalone (no
-    host), the runner must call this itself so messages are not re-fetched.
-    """
-    conn.executemany(
-        "UPDATE messages_in SET status=? WHERE id=? AND status != 'completed'",
-        [(status, mid) for mid in message_ids],
-    )
-    conn.commit()
+def mark_inbound_status(conn: sqlite3.Connection, ids: list[str], status: str) -> None:
+    """Update messages_in.status — tells host we're processing/done with these messages."""
+    try:
+        now = _now_iso()
+        conn.executemany(
+            "UPDATE messages_in SET status=?, tries=tries+1 WHERE id=?",
+            [(status, mid) for mid in ids]
+        )
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # Table might not exist yet — non-fatal
 
 def fetch_routing(conn: sqlite3.Connection) -> dict:
-    row = conn.execute("SELECT channel_type, platform_id, thread_id FROM session_routing LIMIT 1").fetchone()
-    if row:
-        return {"channel_type": row["channel_type"] or "",
-                "platform_id": row["platform_id"] or "",
-                "thread_id": row["thread_id"]}
+    try:
+        row = conn.execute("SELECT channel_type, platform_id, thread_id FROM session_routing LIMIT 1").fetchone()
+        if row:
+            return {"channel_type": row["channel_type"] or "",
+                    "platform_id": row["platform_id"] or "",
+                    "thread_id": row["thread_id"]}
+    except sqlite3.OperationalError:
+        pass
     return {"channel_type": "", "platform_id": "", "thread_id": None}
 
 def fetch_destinations(conn: sqlite3.Connection) -> dict[str, dict]:
