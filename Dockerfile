@@ -4,8 +4,13 @@ FROM python:3.12-slim
 # System deps
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
-        git curl ca-certificates tini cargo \
+        git curl ca-certificates tini build-essential \
     && rm -rf /var/lib/apt/lists/*
+
+# Rust toolchain via rustup (apt cargo is too old for amplifier-core deps)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+    sh -s -- -y --default-toolchain stable --profile minimal
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 # uv for fast installs
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
