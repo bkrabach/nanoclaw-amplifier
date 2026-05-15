@@ -55,11 +55,16 @@ case "$PROVIDER_CHOICE" in
     NANOCLAW_PROVIDER="anthropic"
     PROVIDER_MODEL="claude-opus-4-5"
     echo ""
-    read -rsp "$(echo -e "${BLD}Paste your Anthropic API key (sk-ant-...):${NC} ")" PROVIDER_API_KEY
-    echo ""
+    if [[ -n "${ANTHROPIC_API_KEY:-}" ]]; then
+      info "Found ANTHROPIC_API_KEY in environment"
+      ANTHROPIC_AUTH_TOKEN_VAR="$ANTHROPIC_API_KEY"
+    else
+      read -rsp "$(echo -e "${BLD}Paste your Anthropic API key (sk-ant-...):${NC} ")" PROVIDER_API_KEY
+      echo ""
+      ANTHROPIC_AUTH_TOKEN_VAR="$PROVIDER_API_KEY"
+    fi
     # For Anthropic: let nanoclaw's own auth handle it via NANOCLAW_ANTHROPIC_AUTH_TOKEN
     SKIP_AUTH="no"
-    ANTHROPIC_AUTH_TOKEN_VAR="$PROVIDER_API_KEY"
     ;;
   2)
     PROVIDER_KEY="openai"
@@ -71,8 +76,13 @@ case "$PROVIDER_CHOICE" in
     PROVIDER_MODEL="gpt-4o"
     SKIP_AUTH="yes"
     echo ""
-    read -rsp "$(echo -e "${BLD}Paste your OpenAI API key (sk-...):${NC} ")" PROVIDER_API_KEY
-    echo ""
+    if [[ -n "${OPENAI_API_KEY:-}" ]]; then
+      info "Found OPENAI_API_KEY in environment"
+      PROVIDER_API_KEY="$OPENAI_API_KEY"
+    else
+      read -rsp "$(echo -e "${BLD}Paste your OpenAI API key (sk-...):${NC} ")" PROVIDER_API_KEY
+      echo ""
+    fi
     ;;
   3)
     PROVIDER_KEY="gemini"
@@ -84,8 +94,16 @@ case "$PROVIDER_CHOICE" in
     PROVIDER_MODEL="gemini-2.0-flash"
     SKIP_AUTH="yes"
     echo ""
-    read -rsp "$(echo -e "${BLD}Paste your Gemini API key (AIza...):${NC} ")" PROVIDER_API_KEY
-    echo ""
+    if [[ -n "${GEMINI_API_KEY:-}" ]]; then
+      info "Found GEMINI_API_KEY in environment"
+      PROVIDER_API_KEY="$GEMINI_API_KEY"
+    elif [[ -n "${GOOGLE_API_KEY:-}" ]]; then
+      info "Found GOOGLE_API_KEY in environment"
+      PROVIDER_API_KEY="$GOOGLE_API_KEY"
+    else
+      read -rsp "$(echo -e "${BLD}Paste your Gemini API key (AIza...):${NC} ")" PROVIDER_API_KEY
+      echo ""
+    fi
     ;;
   4)
     PROVIDER_KEY="ollama"
@@ -94,9 +112,13 @@ case "$PROVIDER_CHOICE" in
     PROVIDER_MODEL="llama3"
     SKIP_AUTH="yes"
     echo ""
-    read -rp "$(echo -e "${BLD}Ollama host URL [http://host.docker.internal:11434]:${NC} ")" OLLAMA_HOST_INPUT
-    PROVIDER_API_KEY="${OLLAMA_HOST_INPUT:-http://host.docker.internal:11434}"
-    echo ""
+    if [[ -n "${OLLAMA_HOST:-}" ]]; then
+      info "Found OLLAMA_HOST in environment: $OLLAMA_HOST"
+      PROVIDER_API_KEY="$OLLAMA_HOST"
+    else
+      read -rp "$(echo -e "${BLD}Ollama host URL [http://host.docker.internal:11434]:${NC} ")" OLLAMA_HOST_INPUT
+      PROVIDER_API_KEY="${OLLAMA_HOST_INPUT:-http://host.docker.internal:11434}"
+    fi
     ;;
   *)
     PROVIDER_KEY="anthropic"

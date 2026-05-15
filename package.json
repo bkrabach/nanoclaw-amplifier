@@ -1,0 +1,25 @@
+{
+  "name": "nanoclaw-amplifier",
+  "version": "1.0.0",
+  "description": "Amplifier-powered replacement for nanoclaw's Claude Code container",
+  "type": "module",
+  "bin": {
+    "ncla": "./cli/bin/ncla.js"
+  },
+  "scripts": {
+    "ncla": "node cli/bin/ncla.js"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.2.0",
+    "kleur": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bkrabach/nanoclaw-amplifier.git"
+  },
+  "keywords": ["nanoclaw", "amplifier", "ai-agent", "messaging"],
+  "license": "MIT"
+}
