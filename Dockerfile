@@ -53,6 +53,12 @@ RUN uv pip install --system --no-cache \
 RUN mkdir -p /workspace/agent/.amplifier /workspace/global /workspace/outbox && \
     chmod -R 777 /workspace
 
+# nanoclaw always runs: exec bun run /app/src/index.ts
+# (overrides our ENTRYPOINT via --entrypoint bash)
+# This fake bun intercepts that call and runs our Python runner instead.
+RUN printf '#!/bin/sh\nexec python3 -m nanoclaw_amplifier.runner\n' \
+    > /usr/local/bin/bun && chmod +x /usr/local/bin/bun
+
 # Placeholder API keys so SDKs don't error before OneCLI proxy rewrites them
 ENV ANTHROPIC_API_KEY=placeholder
 ENV OPENAI_API_KEY=placeholder

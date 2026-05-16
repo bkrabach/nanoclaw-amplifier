@@ -120,7 +120,8 @@ async function cmdAddProvider(providerArg) {
     s.start(`Configuring agent ${agentId} to use ${provider.name}...`);
     try {
       execSync(`onecli agents set-secret-mode --id "${agentId}" --mode all`, { stdio: 'pipe' });
-      execSync(`cd "${nanoclawDir}" && ncl groups config update --id "${agentId}" --provider ${providerKey} --model ${provider.model || 'gpt-4o'}`, { stdio: 'pipe' });
+      const imageTag = 'ghcr.io/bkrabach/nanoclaw-amplifier:latest';
+      execSync(`cd "${nanoclawDir}" && ncl groups config update --id "${agentId}" --provider ${providerKey} --model ${provider.model || 'gpt-4o'} --image-tag ${imageTag}`, { stdio: 'pipe' });
       execSync(`cd "${nanoclawDir}" && ncl groups restart --id "${agentId}"`, { stdio: 'pipe' });
       s.stop(`Agent switched to ${provider.name} / ${provider.model || 'gpt-4o'}`);
       p.outro(k.green(`Done! Your assistant now uses ${provider.name}.`));

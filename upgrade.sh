@@ -22,6 +22,25 @@ fi
 info "Pulling latest image..."
 docker pull "$IMAGE" || warn "Could not pull image — will use cached version"
 
+info "Updating agent image tags..."
+cd "$NANOCLAW_DIR"
+if command -v ncl &>/dev/null || pnpm exec ncl --help &>/dev/null 2>&1; then
+  # Update all agents that might be using our image
+  AGENT_IDS=$(ncl groups list 2>/dev/null | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    for g in (data if isinstance(data, list) else []):
+        print(g.get('id',''))
+except: pass
+" 2>/dev/null || true)
+  for AGENT_ID in $AGENT_IDS; do
+    [[ -z "$AGENT_ID" ]] && continue
+    ncl groups config update --id "$AGENT_ID" --image-tag "$IMAGE" 2>/dev/null && \
+      info "Updated image-tag for $AGENT_ID" || true
+  done
+fi
+
 info "Restarting nanoclaw service..."
 if systemctl is-active nanoclaw >/dev/null 2>&1; then
   systemctl restart nanoclaw

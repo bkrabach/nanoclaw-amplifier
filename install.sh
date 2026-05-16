@@ -197,12 +197,14 @@ cd "$NANOCLAW_DIR"
 
 # ── Step 3: Set CONTAINER_IMAGE ────────────────────────────────────────────
 step "Configuring Amplifier container image"
+# Write to .env as well (used by some nanoclaw versions/configs)
 if [[ -f .env ]] && grep -q "^CONTAINER_IMAGE=" .env; then
   sed -i "s|^CONTAINER_IMAGE=.*|CONTAINER_IMAGE=${IMAGE}|" .env
 else
   echo "CONTAINER_IMAGE=${IMAGE}" >> .env
 fi
 info "Container image → ${IMAGE}"
+# Note: per-agent image_tag is set in Step 6 after agents are created
 
 # ── Step 4: Run nanoclaw setup ────────────────────────────────────────────
 step "Running nanoclaw setup wizard"
@@ -263,12 +265,16 @@ if [[ "$PROVIDER_KEY" != "anthropic" ]]; then
     if command -v onecli &>/dev/null; then
       onecli agents set-secret-mode --id "$AGENT_ID" --mode all 2>/dev/null || true
     fi
+    # Set image tag AND provider
     (cd "$NANOCLAW_DIR" && ncl groups config update \
       --id "$AGENT_ID" \
       --provider "$NANOCLAW_PROVIDER" \
-      --model "$PROVIDER_MODEL" 2>/dev/null) && \
-      info "Agent provider → ${NANOCLAW_PROVIDER} / ${PROVIDER_MODEL}" || \
-      warn "Could not update agent provider automatically."
+      --model "$PROVIDER_MODEL" \
+      --image-tag "${IMAGE}" 2>/dev/null) && \
+      info "Agent configured: image=${IMAGE} provider=${NANOCLAW_PROVIDER} model=${PROVIDER_MODEL}" || \
+      warn "Could not update agent config automatically. Run manually:
+  cd ${NANOCLAW_DIR}
+  ncl groups config update --id ${AGENT_ID} --image-tag ${IMAGE} --provider ${NANOCLAW_PROVIDER} --model ${PROVIDER_MODEL}"
     (cd "$NANOCLAW_DIR" && ncl groups restart --id "$AGENT_ID" 2>/dev/null) && \
       info "Agent restarted with ${PROVIDER_NAME}" || \
       warn "Restart failed — run: cd ${NANOCLAW_DIR} && ncl groups restart --id ${AGENT_ID}"
